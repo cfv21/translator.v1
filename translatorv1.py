@@ -1,4 +1,5 @@
-from transformers import MarianMTModel, MarianTokenizer
+from typing import Tuple
+from transformers import MarianMTModel, MarianTokenizer, PreTrainedTokenizer, PreTrainedModel
 
 # Language-to-model mapping
 LANGUAGE_MODELS = {
@@ -8,11 +9,12 @@ LANGUAGE_MODELS = {
     "de-es": "Helsinki-NLP/opus-mt-de-es",  # German to Spanish
     "en-de": "Helsinki-NLP/opus-mt-en-de",  # English to German
     "de-en": "Helsinki-NLP/opus-mt-de-en",  # German to English
-#    "en-jap": "Helsinki-NLP/opus-mt-en-jap", #English to Japanese (Not functional, currently)
 }
 
-# Load model and tokenizer for a specific language pair
-def load_model(language_pair):
+def load_model(language_pair: str) -> Tuple[PreTrainedTokenizer, PreTrainedModel]:
+    """
+    Loads the tokenizer and model for a given language pair.
+    """
     model_name = LANGUAGE_MODELS.get(language_pair)
     if not model_name:
         raise ValueError(f"Language pair '{language_pair}' is not supported.")
@@ -20,18 +22,23 @@ def load_model(language_pair):
     model = MarianMTModel.from_pretrained(model_name)
     return tokenizer, model
 
-# Translate the input text
-def translate(text, tokenizer, model):
+def translate(text: str, tokenizer: PreTrainedTokenizer, model: PreTrainedModel) -> str:
+    """
+    Translates the input text using the given tokenizer and model.
+    """
     inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
     outputs = model.generate(**inputs)
     return tokenizer.decode(outputs[0], skip_special_tokens=True)
 
 def main():
-    print("Multi-Language AI Translator")
+    """
+    Runs the interactive translation CLI.
+    """
+    print("🌍 Multi-Language AI Translator")
     print("Supported language pairs:")
-    for pair in LANGUAGE_MODELS.keys():
+    for pair in LANGUAGE_MODELS:
         print(f"  - {pair}")
-    print("Type 'exit' to quit or 'switch' to change language pair.")
+    print("Type 'exit' to quit or 'switch' to change language pair.\n")
 
     current_language_pair = "en-es"  # Default language pair
     tokenizer, model = load_model(current_language_pair)
@@ -39,20 +46,20 @@ def main():
 
     while True:
         text = input("\nEnter text : ")
-        if text.lower() == 'exit':
+        if text.lower() == "exit":
             print("Goodbye!")
             break
-        elif text.lower() == 'switch':
+        elif text.lower() == "switch":
             print("Supported language pairs:")
-            for pair in LANGUAGE_MODELS.keys():
+            for pair in LANGUAGE_MODELS:
                 print(f"  - {pair}")
-            new_language_pair = input("Enter new language pair: ")
+            new_language_pair = input("Enter new language pair: ").strip()
             try:
                 tokenizer, model = load_model(new_language_pair)
                 current_language_pair = new_language_pair
                 print(f"Switched to language pair: {current_language_pair}")
             except ValueError as e:
-                print(e)
+                print("Error:", e)
         else:
             try:
                 translation = translate(text, tokenizer, model)
